@@ -1,0 +1,12 @@
+name: ecss
+channels:
+  - conda-forge
+  - nodefaults
+dependencies:
+  - python=3.11
+  - fair=2.2.2
+  - jupyter
+  - jupytext
+  - matplotlib
+  - numpy
+  - pandas
