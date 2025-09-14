@@ -1,3 +1,6 @@
+# figures
+plots/
+
 # jupyter notebooks
 *.ipynb
 
