@@ -27,18 +27,18 @@ import matplotlib.pyplot as pl
 # warnings.simplefilter('ignore')
 
 # %%
-os.makedirs('../plots')
+os.makedirs('../plots', exist_ok=True)
 
 # %%
-pl.rcParams['figure.figsize'] = (16/2.54, 16/2.54)
-pl.rcParams['font.size'] = 11
+#pl.rcParams['figure.figsize'] = (16/2.54, 16/2.54)
+pl.rcParams['font.size'] = 7
 pl.rcParams['font.family'] = 'Arial'
 pl.rcParams['xtick.direction'] = 'out'
 pl.rcParams['xtick.minor.visible'] = True
 pl.rcParams['ytick.minor.visible'] = True
 pl.rcParams['ytick.right'] = True
 pl.rcParams['xtick.top'] = True
-pl.rcParams['figure.dpi'] = 96
+pl.rcParams['figure.dpi'] = 150
 
 # %%
 models = []
@@ -106,22 +106,58 @@ igcc_temp = pd.read_csv('../data/igcc2024/IGCC_GMST_1850-2024.csv', index_col='y
 igcc_temp
 
 # %%
-sixtyoneninety=np.ones(len(accepted_models))*np.nan
-fiftyoneeighty=np.ones(len(accepted_models))*np.nan
-ninetyfivefourteen = np.ones(len(accepted_models))*np.nan
+colors = {
+    'EC-Earth3-AerChem': 'tab:red',
+    'UKESM1-0-LL': 'tab:cyan'
+}
+
+# %%
+# sixtyoneninety=np.ones(len(accepted_models))*np.nan
+# fiftyoneeighty=np.ones(len(accepted_models))*np.nan
+# ninetyfivefourteen = np.ones(len(accepted_models))*np.nan
+
+fig, ax = pl.subplots(1, 2, figsize=(17/2.54, 8.5/2.54))
 full=np.ones((165, len(accepted_models)))
 for i, model in enumerate(accepted_models):
+    lw = 0.35
+    label = ""
+    color = '0.7'
+    # if model in ['EC-Earth3-AerChem', 'UKESM1-0-LL']:
+    #     lw=2
+    #     label = model,
+    #     color=colors[model]
+    if i==0:
+        label = "CMIP6 models"
     full[:,i] = historical[model]['tas'][:165] - np.mean(historical[model]['tas'][0:51])
-    pl.plot(np.arange(1850.5, 1850+nyears[model]), historical[model]['tas'] - np.mean(historical[model]['tas'][0:51]), lw=0.5)
-    sixtyoneninety[i] = historical[model]['1961-1990']
-    fiftyoneeighty[i] = historical[model]['1951-1980']
-    ninetyfivefourteen[i] = historical[model]['1995-2014']
-pl.fill_between(np.arange(1960, 2001), -0.7, 1.8, color='#f0f0f0')
-pl.plot(np.arange(1850.5, 2025), igcc_temp, color='k', lw=2, label='Observations')
-pl.xlim(1850, 2015)
-pl.ylim(-0.7, 1.8)
-pl.legend(frameon=False)
-pl.ylabel('Temperature anomaly above 1850-1900, °C')
+    ax[0].plot(np.arange(1850.5, 1850+nyears[model]), historical[model]['tas'] - np.mean(historical[model]['tas'][0:51]), lw=lw, label=label, color=color)
+    # sixtyoneninety[i] = historical[model]['1961-1990']
+    # fiftyoneeighty[i] = historical[model]['1951-1980']
+    # ninetyfivefourteen[i] = historical[model]['1995-2014']
+# ax[0].fill_between(np.arange(1960, 2001), -0.7, 1.8, color='#f0f0f0')
+for model in ['EC-Earth3-AerChem', 'UKESM1-0-LL']:
+    lw=1.5
+    label = model,
+    color=colors[model]
+    ax[0].plot(np.arange(1850.5, 1850+nyears[model]), historical[model]['tas'] - np.mean(historical[model]['tas'][0:51]), lw=lw, label=label, color=color)
+ax[0].plot(np.arange(1850.5, 2025), igcc_temp, color='k', lw=1.5, label='Observations')
+ax[0].set_xlim(1850, 2015)
+ax[0].set_ylim(-0.6, 1.7)
+ax[0].legend(frameon=False)
+ax[0].set_ylabel('Temperature anomaly relative to 1850-1900, °C')
+ax[0].set_title('(a) Individual models')
+
+ax[1].fill_between(np.arange(1970, 2001), -0.7, 1.8, color='#f0f0f0')
+ax[1].fill_between(np.arange(1850.5, 2015), np.percentile(full, 10, axis=1), np.percentile(full, 90, axis=1), alpha=0.3, color='tab:purple', lw=0, label="10-90% range")
+ax[1].plot(np.arange(1850.5, 2015), np.median(full, axis=1), color='tab:purple', label="CMIP6 median")
+ax[1].plot(np.arange(1850.5, 2025), igcc_temp, color='k', lw=1.5, label='Observations')
+ax[1].set_xlim(1850, 2015)
+ax[1].set_ylim(-0.6, 1.7)
+# ax[1].set_ylabel('Temperature anomaly relative to 1850-1900, °C')
+ax[1].legend(frameon=False)
+ax[1].set_title('(b) Model ensemble')
+
+fig.tight_layout()
+
 pl.savefig('../plots/historical_warming.png')
 
 # %%
