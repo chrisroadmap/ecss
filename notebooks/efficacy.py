@@ -13,6 +13,7 @@
 # ---
 
 # %%
+import os
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as pl
@@ -21,13 +22,26 @@ import matplotlib.pyplot as pl
 from fair.energy_balance_model import EnergyBalanceModel
 
 # %%
-df_params = pd.read_csv("../data/calibrated_constrained_parameters_1.4.0.csv", index_col=0)
+os.makedirs('../plots', exist_ok=True)
+
+# %%
+pl.rcParams['font.size'] = 7
+pl.rcParams['font.family'] = 'Arial'
+pl.rcParams['xtick.direction'] = 'out'
+pl.rcParams['xtick.minor.visible'] = True
+pl.rcParams['ytick.minor.visible'] = True
+pl.rcParams['ytick.right'] = True
+pl.rcParams['xtick.top'] = True
+pl.rcParams['figure.dpi'] = 150
+
+# %%
+df_params = pd.read_csv("../data/calibrated_constrained_parameters_1.4.3.csv", index_col=0)
 
 # %%
 params_median = df_params.median()
 
 # %%
-params_median['ocean_heat_capacity[0]']
+params_median['clim_c1']
 
 # %%
 # ebm10 = EnergyBalanceModel(
@@ -64,29 +78,29 @@ ebm10 = EnergyBalanceModel(
     n_timesteps=5000,
     stochastic_run=False,
     deep_ocean_efficacy=1,
-    ocean_heat_transfer=[params_median['ocean_heat_transfer[0]'], params_median['ocean_heat_transfer[2]']], 
-    ocean_heat_capacity=[params_median['ocean_heat_capacity[0]'], params_median['ocean_heat_capacity[2]']],
+    ocean_heat_transfer=[params_median['clim_kappa1'], params_median['clim_kappa2']], 
+    ocean_heat_capacity=[params_median['clim_c1'], params_median['clim_c2']],
 )
 ebm15 = EnergyBalanceModel(
     n_timesteps=5000,
     stochastic_run=False,
     deep_ocean_efficacy=1.5,
-    ocean_heat_transfer=[params_median['ocean_heat_transfer[0]'], params_median['ocean_heat_transfer[2]']], 
-    ocean_heat_capacity=[params_median['ocean_heat_capacity[0]'], params_median['ocean_heat_capacity[2]']],
+    ocean_heat_transfer=[params_median['clim_kappa1'], params_median['clim_kappa2']], 
+    ocean_heat_capacity=[params_median['clim_c1'], params_median['clim_c2']],
 )
 ebm20 = EnergyBalanceModel(
     n_timesteps=5000,
     stochastic_run=False,
     deep_ocean_efficacy=2,
-    ocean_heat_transfer=[params_median['ocean_heat_transfer[0]'], params_median['ocean_heat_transfer[2]']], 
-    ocean_heat_capacity=[params_median['ocean_heat_capacity[0]'], params_median['ocean_heat_capacity[2]']],
+    ocean_heat_transfer=[params_median['clim_kappa1'], params_median['clim_kappa2']], 
+    ocean_heat_capacity=[params_median['clim_c1'], params_median['clim_c2']],
 )
 ebm50 = EnergyBalanceModel(
     n_timesteps=5000,
     stochastic_run=False,
     deep_ocean_efficacy=5,
-    ocean_heat_transfer=[params_median['ocean_heat_transfer[0]'], params_median['ocean_heat_transfer[2]']], 
-    ocean_heat_capacity=[params_median['ocean_heat_capacity[0]'], params_median['ocean_heat_capacity[2]']],
+    ocean_heat_transfer=[params_median['clim_kappa1'], params_median['clim_kappa2']], 
+    ocean_heat_capacity=[params_median['clim_c1'], params_median['clim_c2']],
 )
 
 # %%
@@ -107,31 +121,75 @@ ebm10.temperature
 # %%
 ebm10.toa_imbalance
 
-# %%
-fig, ax = pl.subplots(figsize=(15/2.54, 15/2.54))
 
-ax.plot(ebm10.temperature[:, 0], ebm10.toa_imbalance, label=r'$\varepsilon=1.0$')
-ax.plot(ebm15.temperature[:, 0], ebm15.toa_imbalance, label=r'$\varepsilon=1.5$')
-ax.plot(ebm20.temperature[:, 0], ebm20.toa_imbalance, label=r'$\varepsilon=2.0$')
-ax.plot(ebm50.temperature[:, 0], ebm50.toa_imbalance, label=r'$\varepsilon=5.0$')
+# %%
+def effective_climate_sensitivity(ebm):
+    n = ebm.toa_imbalance
+    f = ebm.forcing
+    t = ebm.temperature[:,0]
+    lambda_eff = (n - f) / t
+    sens_eff = -1/lambda_eff
+    return (sens_eff)
+
+
+# %%
+fig, ax = pl.subplots(1, 2, figsize=(15/2.54, 8/2.54))
+
+ax[0].plot(ebm10.temperature[:500, 0], ebm10.toa_imbalance[:500], label=r'$\varepsilon=1.0$')
+ax[0].plot(ebm15.temperature[:500, 0], ebm15.toa_imbalance[:500], label=r'$\varepsilon=1.5$')
+ax[0].plot(ebm20.temperature[:500, 0], ebm20.toa_imbalance[:500], label=r'$\varepsilon=2.0$')
+ax[0].plot(ebm50.temperature[:500, 0], ebm50.toa_imbalance[:500], label=r'$\varepsilon=5.0$')
 
 # zero axis
-ax.spines['left'].set_position('zero')
-ax.spines['right'].set_color('none')
-ax.yaxis.tick_left()
-ax.spines['bottom'].set_position('zero')
-ax.spines['top'].set_color('none')
-ax.xaxis.tick_bottom()
+ax[0].spines['left'].set_position('zero')
+ax[0].spines['right'].set_color('none')
+ax[0].yaxis.tick_left()
+ax[0].spines['bottom'].set_position('zero')
+ax[0].spines['top'].set_color('none')
+ax[0].xaxis.tick_bottom()
+ax[0].set_ylim(0, 4.2)
 
 # arrows at the end of axes
-ax.plot(1, 0, ">k", transform=ax.get_yaxis_transform(), clip_on=False)
-ax.plot(0, 1, "^k", transform=ax.get_xaxis_transform(), clip_on=False)
+ax[0].plot(1, 0, ">k", transform=ax[0].get_yaxis_transform(), clip_on=False)
+ax[0].plot(0, 1, "^k", transform=ax[0].get_xaxis_transform(), clip_on=False)
 
-ax.set_xticklabels([]);
-ax.set_yticklabels([]);
-ax.legend(frameon=False)
+ax[0].set_xticklabels([]);
+ax[0].set_yticklabels([]);
+ax[0].legend(frameon=False)
 
-ax.set_xlabel('Temperature')
-ax.set_ylabel('Top of atmosphere radiation imbalance')
+ax[0].set_xlabel('Temperature, K')
+ax[0].set_ylabel('Top of atmosphere radiation imbalance, W m$^{-2}$')
+ax[0].set_title('(a) Gregory plot')
+
+ax[1].plot(effective_climate_sensitivity(ebm10)[:500]);
+ax[1].plot(effective_climate_sensitivity(ebm15)[:500]);
+ax[1].plot(effective_climate_sensitivity(ebm20)[:500]);
+ax[1].plot(effective_climate_sensitivity(ebm50)[:500]);
+
+# zero axis
+ax[1].spines['left'].set_position('zero')
+ax[1].spines['right'].set_color('none')
+ax[1].yaxis.tick_left()
+ax[1].spines['bottom'].set_position('zero')
+ax[1].spines['top'].set_color('none')
+ax[1].xaxis.tick_bottom()
+
+ax[1].set_ylim(0, 0.82)
+
+# arrows at the end of axes
+ax[1].plot(1, 0, ">k", transform=ax[1].get_yaxis_transform(), clip_on=False)
+ax[1].plot(0, 1, "^k", transform=ax[1].get_xaxis_transform(), clip_on=False)
+
+ax[1].set_xticklabels([]);
+ax[1].set_yticklabels([]);
+#ax[1].legend(frameon=False)
+
+ax[1].set_xlabel('Time')
+ax[1].set_ylabel('Effective climate sensitivity, W m$^{-2}$ K$^{-1}$')
+
+ax[1].set_title('(b) Effective climate sensitivity')
+
+fig.tight_layout()
+pl.savefig('../plots/efficacy.png')
 
 # %%
