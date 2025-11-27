@@ -8,5 +8,7 @@ dependencies:
   - jupyter
   - jupytext
   - matplotlib
+  - netcdf4
   - numpy
   - pandas
+  - xarray
