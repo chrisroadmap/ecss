@@ -35,7 +35,7 @@ pl.rcParams['xtick.top'] = True
 pl.rcParams['figure.dpi'] = 150
 
 # %%
-df_params = pd.read_csv("../data/calibrated_constrained_parameters_1.4.3.csv", index_col=0)
+df_params = pd.read_csv("../data/fair-calibrate/calibrated_constrained_parameters_1.4.3.csv", index_col=0)
 
 # %%
 params_median = df_params.median()
@@ -193,7 +193,7 @@ fig.tight_layout()
 pl.savefig('../plots/efficacy.png')
 
 # %%
-df_params = pd.read_csv("../data/calibrated_constrained_parameters_1.4.0.csv", index_col=0)
+df_params = pd.read_csv("../data/fair-calibrate/calibrated_constrained_parameters_1.4.0.csv", index_col=0)
 
 # %%
 params_median = df_params.median()
